@@ -55,7 +55,8 @@ The first set of analysis I performed was to analyze the types of tweets that Vi
 
 This type of analysis seemed useful as it would give one some indication of which ways Vice-President Biden engages and utilizes Twitter.
 
-<pre><code>biden_tweets_organic <- biden[biden$is_retweet==FALSE,]
+<pre><code>
+biden_tweets_organic <- biden[biden$is_retweet==FALSE,]
 biden_retweets <- biden[biden$is_retweet==TRUE,]
 biden_replies <- subset(biden,
                         !is.na(biden$reply_to_status_id))
@@ -86,7 +87,8 @@ biden_ratio_plot <- ggplot(ratio_data_biden, aes(ymax=ymax, ymin=ymin, xmax=4, x
   theme(legend.position = "right") +
   ggtitle("Ratio of Tweets from @JoeBiden by Type")
   
-biden_ratio_plot</code></pre>
+biden_ratio_plot
+</code></pre>
 
 Looking at the visualization below, it is apparent that @JoeBiden posts Organic Tweets almost exclusive - they account for over 87% of his most recent 3200 posts on Twitter.
 
