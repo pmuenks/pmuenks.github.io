@@ -42,6 +42,9 @@ names(e2020)
 The first type of analysis completed was generating bar graphs to analyze the number of Favorites and Retweets within the data. Admittidly, the sample size of n=100 is small, but as an example, makes the data easier to work with for demonstration purposes.
 
 <pre><code>  
+count_favorites <- table(e2020$favorites)
+count_retweets <- table(e2020$retweets)
+
 barplot(count_favorites, main = "Bar Graph of #Election2020 Tweets: Number of Favorites",
           col=c("red"),
           xlab = "Number of Favorites",
