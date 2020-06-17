@@ -231,7 +231,7 @@ biden_sentiment_plot <- ggplot(data = sentimentscores,aes(x=sentiment,y=Score)) 
   theme_minimal()
 
 biden_sentiment_plot
-<pre><code>
+</code></pre>
 
 Looking at the results, the two most common sentiments expressed by Vice-President Biden on Twitter are positivity and negativity. As a quick analysis, this duality would seem to fit with a presidential candidate that is challenging a sitting President. The communication strategy would be to discuss all of the things going poorly (negative) but provide messages that suggest an electoral victory for Vice-President Biden would bring about positive change (postive).
 
