@@ -91,7 +91,7 @@ biden_ratio_plot
 
 Looking at the visualization below, it is apparent that @JoeBiden posts Organic Tweets almost exclusive - they account for over 87% of his most recent 3200 posts on Twitter.
 
-[b]![Biden Tweet Ratio Graphic](/images/biden_ratio_plot.png "Biden Ratio Graphic")[/b]
+![Biden Tweet Ratio Graphic](/images/biden_ratio_plot.png "Biden Ratio Graphic")
 
 An additional bit of analysis that can be completed by sorting tweets into the three aforementioned categories is to analysis which tweet is favorited and/or retweeted the most. For this type of analysis, Organic Tweets would be the most appropriate to analyze given that one would want to examine which original posts have generated the most interest. In the case of @JoeBiden, the most favorited post also happens to be the most retweeted post.  
 
