@@ -2,7 +2,7 @@
 layout: post
 title: GetOldTweets3
 ---
-#Twitter Analysis Using Data from GetOldTweets3
+# Twitter Analysis Using Data from GetOldTweets3
 
 Overall, the process of obtaining data for analysis is faster and less complex than using the Twitter API method. The python code is quite short and efficient and entered through the Command Prompt on Windows.
 
