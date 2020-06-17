@@ -257,3 +257,37 @@ attr(e2020_small_net, "idsn")
 Finally, the results of the network analysis should distnict nodes, notably forming around @FoxNews and @realDonaldTrump as seen the graphic below. Also notable is with very few exceptions, everyone of the 50 accounts pulled have a connection with at least on other user.
 
 ![Hashtag Election2020 Network](/images/igraph_keyword.png "Hashtag Election2020 Network")
+
+As an additional bit of work on network analysis, I followed the example from chapter 7 of the Russell book Recipes for Mining Twitter data. I created a new query for #Elections2020 setting n=1000 for a more robust set of analysis. Note that there are two additional libraries required and you may have to install additional fonts on your computer for the code to compile correctly. When loading the libraries, there are common FAQs to errors related to fonts; should be viewable in the console after loading the library.
+
+<pre><code># Network Graph from Twitter Book
+
+library(hrbrthemes)
+library(extrafont)
+
+e2020 <- search_tweets("#Election2020", n = 1000)
+
+filter(e2020, retweet_count > 0) %>% 
+  select(screen_name, mentions_screen_name) %>%
+  unnest(mentions_screen_name) %>% 
+  filter(!is.na(mentions_screen_name)) %>% 
+  graph_from_data_frame() -> e_g
+
+V(e_g)$node_label <- unname(ifelse(degree(e_g)[V(e_g)] > 20, names(V(e_g)), "")) 
+V(e_g)$node_size <- unname(ifelse(degree(e_g)[V(e_g)] > 20, degree(e_g), 0)) 
+
+ggraph(e_g, layout = 'linear', circular = TRUE) + 
+  geom_edge_arc(edge_width=0.125, aes(alpha=..index..)) +
+  geom_node_label(aes(label=node_label, size=node_size),
+                  label.size=0, fill="#ffffff66", segment.colour="springgreen",
+                  color="slateblue", repel=TRUE, family=font_rc, fontface="bold") +
+  coord_fixed() +
+  scale_size_area(trans="sqrt") +
+  labs(title="Retweet Relationships for #Election2020", subtitle="Most retweeted screen names labeled. Darkers edges == more retweets. Node size == larger degree") +
+  theme_graph(base_family=font_rc) +
+  theme(legend.position="none")
+</code></pre>
+
+The node analysis shows large network clusters around @JoeBiden, @FoxNews, and @SenTedCruz. Additionally, one can observe a signficant node around @not2far2right.
+
+![e2020 large node](/images/e2020_large_node.png "e2020 large node")
