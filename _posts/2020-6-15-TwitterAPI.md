@@ -235,6 +235,6 @@ attr(e2020_small_net, "idsn")
   e2020_small_net <- network_graph(e2020_small)
   plot(e2020_small_net)</code></pre>
 
-Finally, the results of the network analysis should distnict nodes, notably forming around @FoxNews and @realDonaldTrump as seen the graphic below.
+Finally, the results of the network analysis should distnict nodes, notably forming around @FoxNews and @realDonaldTrump as seen the graphic below. Also notable is with very few exceptions, everyone of the 50 accounts pulled have a connection with at least on other user. 
 
-![Hashtag Election2020 Network](/images/iGraph - Keyword.png "Hashtag Election2020 Network")
+![Hashtag Election2020 Network](/images/igraph_keyword.png "Hashtag Election2020 Network")
