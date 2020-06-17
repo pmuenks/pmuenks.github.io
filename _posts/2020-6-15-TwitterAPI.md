@@ -8,7 +8,8 @@ To complete these exercises, the first step was to secure a Developer Account wi
 <pre><code>#Clear environment
 rm(list=ls())
 
-##install.packages(c("rtweet","igraph","tidyverse","syuzhet","ggraph","data.table","radiant.data","ggplot2","tidytext","wordcloud","tm"), repos = "https://cran.r-project.org")
+##install.packages(c("rtweet","igraph","tidyverse","syuzhet","ggraph","data.table",
+"radiant.data","ggplot2","tidytext","wordcloud","tm"), repos = "https://cran.r-project.org")
 library(rtweet)
 library(igraph)
 library(tidyverse)
