@@ -162,3 +162,4 @@ e2020_sentiment_plot
 The sentiment analysis should positvity as the highest sentiment among the tweets with negativity just behind it. Interesting, trust was the next highest sentiment by a large margin with sadness and fear also being somewhat high, appearing in approximately one third of the tweets analyzed. 
 
 ![Elections2020 sentiment](/images/sentiment_analysis_hashtag_e2020.png "Elections2020 sentiment")
+
