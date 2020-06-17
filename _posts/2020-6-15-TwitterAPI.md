@@ -92,7 +92,7 @@ biden_ratio_plot
 
 Looking at the visualization below, it is apparent that @JoeBiden posts Organic Tweets almost exclusive - they account for over 87% of his most recent 3200 posts on Twitter.
 
-![Biden Tweet Ratio Graphic](/images/biden_ratio_plot.png "Biden Ratio Graphic")
+[b]![Biden Tweet Ratio Graphic](/images/biden_ratio_plot.png "Biden Ratio Graphic")[/b]
 
 An additional bit of analysis that can be completed by sorting tweets into the three aforementioned categories is to analysis which tweet is favorited and/or retweeted the most. For this type of analysis, Organic Tweets would be the most appropriate to analyze given that one would want to examine which original posts have generated the most interest. In the case of @JoeBiden, the most favorited post also happens to be the most retweeted post.  
 
@@ -114,7 +114,7 @@ Another interesting piece of analysis is to analyze how often tweets are being p
 
 Here is the code used to produce this graph. Note that it is using the biden dataframe which will include all 3200 tweets. Aggeragating the tweets by month gave a better result than by year. 
 
-<code><pre>
+<pre><code>
 colnames(biden)[colnames(biden)=="screen_name"] <- "Twitter_Account"
 
 biden_frequency_plot <- ts_plot(dplyr::group_by(biden, Twitter_Account), "month") +
@@ -133,7 +133,7 @@ The aforementioned analysis examined the mechanics of the tweets. The next secti
 
 To begin, it is necessary to clean the data. This cleaning occurs at two levels. First, Twitter specific artifacts such as "@" and punctuation need to be removed. 
 
-<code><pre>
+<pre><code>
 biden_tweets_organic$text <- gsub("https\\S*", "",
                              biden_tweets_organic$text)
 biden_tweets_organic$text <- gsub("@\\S*", "",
@@ -148,7 +148,7 @@ biden_tweets_organic$text <- gsub("[[:punct:]]", "",
 
 Next, using the unnest_tokens function, so-called 'stop' words are removed. Examples of stop words include "the", "or", "a", etc. While in a literal sense, these may be the most frequent words used, such words are not useful for content analysis.
 
-<code><pre>
+<pre><code>
 organic_freq <- biden_tweets_organic %>%
   select(text) %>%
   unnest_tokens(word, text)
@@ -159,7 +159,7 @@ organic_freq <- organic_freq %>%
 
 Finally, the frequency of the words needs to be visualized. Here, a bar graph is used to represent the top ten most frequently used words in Organic Tweets from @JoeBiden.
 
-<code><pre>
+<pre><code>
 biden_word_freq_plot <- organic_freq %>%
   count(word, sort = TRUE) %>%
   top_n(10) %>%
@@ -182,7 +182,7 @@ As one can see in the graph below, the most frequent words Tweeted by Vice-Presi
 
 Relatedly, one can conduct analysis of the most frequent hashtags used by @JoeBiden.
 
-<code><pre>
+<pre><code>
 biden_tweets_organic$hashtags <-
   as.character(biden_tweets_organic$hashtags)
 biden_tweets_organic$hashtags <- gsub("c\\(", "",biden_tweets_organic$hashtags)
@@ -209,7 +209,7 @@ The final bit of analysis comes from sentiment analysis. This analysis realies t
 
 The code for this analysis is: 
 
-<code><pre>
+<pre><code>
 organic_freq <- iconv(organic_freq, from="UTF-8", to="ASCII", sub="")
 organic_freq <-gsub("(RT|via)((?:\\b\\w*@\\w+)+)","",organic_freq)
 organic_freq <-gsub("@\\w+","",organic_freq)
@@ -231,7 +231,7 @@ biden_sentiment_plot <- ggplot(data = sentimentscores,aes(x=sentiment,y=Score)) 
   theme_minimal()
 
 biden_sentiment_plot
-</code></pre>
+<pre><code>
 
 Looking at the results, the two most common sentiments expressed by Vice-President Biden on Twitter are positivity and negativity. As a quick analysis, this duality would seem to fit with a presidential candidate that is challenging a sitting President. The communication strategy would be to discuss all of the things going poorly (negative) but provide messages that suggest an electoral victory for Vice-President Biden would bring about positive change (postive).
 
@@ -241,7 +241,7 @@ Looking at the results, the two most common sentiments expressed by Vice-Preside
 
 The search term analysis uses a smaller dataset as the igraph package used for network analysis is quite resource intensive. Accordingly, a dataset of only 50 observations was pulled from Twitter for analysis. By including retweets, the analysis should yield a more active network when the connections are graphed. The search term analyzed was the hashtag #Election2020. 
 
-<code><pre>
+<pre><code>
 e2020_small <- search_tweets(
   "#Election2020", n = 50, include_rts = TRUE
 )
@@ -249,7 +249,7 @@ e2020_small <- search_tweets(
   
 Next, using the network_data and network_graph functions from the igraph library, the data are prepared for graphical network representation.
 
-<code><pre>
+<pre><code>
 e2020_small_net <- network_data(e2020_small, "retweet,mention,reply")
 
 attr(e2020_small_net, "idsn")
