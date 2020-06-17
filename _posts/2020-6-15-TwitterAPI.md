@@ -146,7 +146,7 @@ biden_tweets_organic$text <- gsub("[[:punct:]]", "",
                                   biden_tweets_organic$text)
 </code></pre>
 
-Next, using the unnest_tokens function, so-called 'stop' words are removed. Examples of stop words include "the", "or", "a", etc. While in a literal sense, these may be the most frequent words used, such words are not useful for content analysis.
+Next, using the unnest_tokens and anti_join(stop_words) functions, so-called 'stop' words are removed. Examples of stop words include "the", "or", "a", etc. While in a literal sense, these may be the most frequent words used, such words are not useful for content analysis.
 
 <pre><code>
 organic_freq <- biden_tweets_organic %>%
