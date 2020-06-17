@@ -210,7 +210,7 @@ The final bit of analysis comes from sentiment analysis. This analysis realies t
 
 The code for this analysis is: 
 
-
+<pre><code>
 organic_freq <- iconv(organic_freq, from="UTF-8", to="ASCII", sub="")
 organic_freq <-gsub("(RT|via)((?:\\b\\w*@\\w+)+)","",organic_freq)
 organic_freq <-gsub("@\\w+","",organic_freq)
@@ -232,7 +232,7 @@ biden_sentiment_plot <- ggplot(data = sentimentscores,aes(x=sentiment,y=Score)) 
   theme_minimal()
 
 biden_sentiment_plot
-
+</code></pre>
 
 Looking at the results, the two most common sentiments expressed by Vice-President Biden on Twitter are positivity and negativity. As a quick analysis, this duality would seem to fit with a presidential candidate that is challenging a sitting President. The communication strategy would be to discuss all of the things going poorly (negative) but provide messages that suggest an electoral victory for Vice-President Biden would bring about positive change (postive).
 
@@ -242,21 +242,21 @@ Looking at the results, the two most common sentiments expressed by Vice-Preside
 
 The search term analysis uses a smaller dataset as the igraph package used for network analysis is quite resource intensive. Accordingly, a dataset of only 50 observations was pulled from Twitter for analysis. By including retweets, the analysis should yield a more active network when the connections are graphed. The search term analyzed was the hashtag #Election2020. 
 
-e2020_small <- search_tweets(
+<pre><code>e2020_small <- search_tweets(
   "#Election2020", n = 50, include_rts = TRUE
 )
-
+</code></pre>
   
 Next, using the network_data and network_graph functions from the igraph library, the data are prepared for graphical network representation.
 
 
-e2020_small_net <- network_data(e2020_small, "retweet,mention,reply")
+<pre><code>e2020_small_net <- network_data(e2020_small, "retweet,mention,reply")
 
 attr(e2020_small_net, "idsn")
 
   e2020_small_net <- network_graph(e2020_small)
   plot(e2020_small_net)
-
+</code></pre>
 
 Finally, the results of the network analysis should distnict nodes, notably forming around @FoxNews and @realDonaldTrump as seen the graphic below. Also notable is with very few exceptions, everyone of the 50 accounts pulled have a connection with at least on other user.
 
