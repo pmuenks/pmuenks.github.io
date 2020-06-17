@@ -2,6 +2,7 @@
 layout: post
 title: Twitter API Exercise
 ---
+# Twitter API Exercises
 
 To complete these exercises, the first step was to secure a Developer Account with Twitter. Once this was completed, I used the code provided by Dr. Ho as a starting point - the list of libraries was expanded to include all packages for analysis and grapichs in this post:
 
