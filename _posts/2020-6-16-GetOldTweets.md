@@ -4,10 +4,9 @@ title: GetOldTweets3
 ---
 #Twitter Analysis Using Data from GetOldTweets3
 
-Overall, the process of obtaining data for analysis is faster and less complex than using the Twitter API method. The python code is quite short and efficient.
+Overall, the process of obtaining data for analysis is faster and less complex than using the Twitter API method. The python code is quite short and efficient and entered through the Command Prompt on Windows.
 
-<pre><code>
-python Exporter_py3.py --querysearch "Election2020" --maxtweets 100 --output election_tweets.csv
+<pre><code>python Exporter_py3.py --querysearch "Election2020" --maxtweets 100 --output election_tweets.csv
 </code></pre>
 
 After downloading the data, it was imported into R as a CSV file. Also listed are a number of libraries that can be useful for manipulating and analyzing Twitter data.
@@ -133,7 +132,7 @@ Expectedly, the results of the word cloud graphs are similar to the word frequen
 
 
 ![Elections2020 hashtag wordcloud](/images/e2020_hashtag_wordcloud.png "Elections2020 hashtag wordcloud")
-![Elections2020 mentions wordcloud](/images/e2020_mentions_wordcloud.png "Elections2020 mentions wordcloud")
+![Elections2020 mentions wordcloud](/images/e2020_mention_wordcloud.png "Elections2020 mentions wordcloud")
 
 Finally, sentiment analysis was completed on the 98 tweets. The library syuzhet was used to perform the sentiment analysis. 
 
