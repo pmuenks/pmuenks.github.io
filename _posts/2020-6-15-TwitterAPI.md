@@ -2,7 +2,6 @@
 layout: post
 title: Twitter API Exercise
 ---
-# Twitter API Exercises
 
 To complete these exercises, the first step was to secure a Developer Account with Twitter. Once this was completed, I used the code provided by Dr. Ho as a starting point - the list of libraries was expanded to include all packages for analysis and grapichs in this post:
 
@@ -42,7 +41,6 @@ rtweet::get_token()</code></pre>
 
 The exercise for querying, analyzing, and visualizing data using the API method asked us to complete two searches; one using a username search and the other using a keyword search. The only other specified requirement was to utilize the igraph package to create a simple network chart – this was completed for the keyword search.
 
-### User Search and Analysis
 To start, I began by selecting former Vice-President and the presumptive Democratic nominee for President, Joe Bide, as the user whose account would be analyzed. I began by retrieving the 3200 most recent tweets from @JoeBiden which is his official Twitter account.
 
 <pre><code>biden <- get_timeline("JoeBiden", n = 3200)</code></pre>
@@ -237,8 +235,6 @@ biden_sentiment_plot
 Looking at the results, the two most common sentiments expressed by Vice-President Biden on Twitter are positivity and negativity. As a quick analysis, this duality would seem to fit with a presidential candidate that is challenging a sitting President. The communication strategy would be to discuss all of the things going poorly (negative) but provide messages that suggest an electoral victory for Vice-President Biden would bring about positive change (postive).
 
 ![Biden Sentiment Analysis](/images/biden_sentiment_analysis.png "Biden Sentiment Analysis")
-
-### Searching by Hashtag and Analysis
 
 The search term analysis uses a smaller dataset as the igraph package used for network analysis is quite resource intensive. Accordingly, a dataset of only 50 observations was pulled from Twitter for analysis. By including retweets, the analysis should yield a more active network when the connections are graphed. The search term analyzed was the hashtag #Election2020. 
 
