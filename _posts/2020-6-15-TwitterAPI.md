@@ -126,7 +126,6 @@ biden_frequency_plot <- ts_plot(dplyr::group_by(biden, Twitter_Account), "month"
     subtitle = "Tweet Counts Aggregated by Month",
     caption = "\nSource: Data collected from Twitter's REST API via r-package 'rtweet'"
   )
-
 biden_frequency_plot
 </code></pre>
 
