@@ -1,0 +1,889 @@
+---
+header-includes:
+    - \usepackage{setspace}
+    - \doublespacing
+    - \usepackage{titling}
+    - \renewcommand\maketitlehooka{\null\mbox{}\vfill}
+    - \renewcommand\maketitlehookd{\vfill\null}
+title: "Scraping and Analyzing Texas Voter Turnout Data."
+subtitle: "EPPS 7V82 Report - Summer 2020"
+author: "Patrick Muenks"
+geometry: margin=1in
+fontsize: 11pt
+output: pdf_document
+bibliography: C:/Users/patri/Downloads/Muenks EPPS 7V81 Final References.bib #available on github
+---
+\newpage
+\tableofcontents
+\newpage
+
+# Introduction
+
+Analysis of what factors impact voter turnout in American elections continues to be an important area of research in political science. A central challenge to this enterprise is the administration of elections in the United States is a decentralized process. This makes the collection of data for analysis challenging as there is not a centralized and cost-free option for efficiently accessing US election data. This research report is an attempt to overcome this challenge by detailing a proof of concept for collecting, analyzing, and visualizing data from elections in Texas. The report is broken into five sections: data science problem, data collection, data analysis, data visualization, and a conclusion which will discuss further directions for data collection and research following this project. The code for this report along with links to the author's [**GitHub**](https://github.com/pmuenks/pmuenks.github.io/tree/master/_data) can be found in the Appendix. 
+  
+For context, this project was selected as it supports the author's efforts to complete a dissertation which focuses on US political institutions and elections. The dissertation seeks to understand the different effects that political institutions and laws have on the electoral process and voter turnout in the US. Prior to this project, the author had beginning to intermediate experience with R and no experience using Python. Through this project, the author has gain confidence in programming and data science skills through an introduction to Python and exploring intermediate to advanced use cases in R.
+
+# Data Science Problem
+
+A significant challenge to conducting research on elections in the United States is the decentralized nature of election administration. Each state is responsible for the administration of its elections which means there are fifty different election administrations in the United States [@hill_american_2006]. With three exceptions, election data is not regulated by the federal government. The first exception are federal laws that govern how voter registration information is administered and stored [@clearing_house_election_administration_implementing_1994]. However, those laws do not require the data to be made publicly available and access to that data varies by state [@national_conference_of_state_legislatures_access_2019]. The second exception is the Federal Election Commission  reporting requirements for contributions to political campaigns [@federal_elections_commission_election_2020]. This data is publicly available though it does not include information about voting; only monetary contributions. The final exception is that the results of federal elections are reported to the U.S. House of Representatives [@clerk_of_the_house_election_2019]. However, the data reported are only results for federal elections to Congress. These results omit any information beyond who ran for office and how many votes they received making the data somewhat limited in application for research on voter turnout.  
+
+Absent a unifying guidance or requirements along with sparse federal sources, the availability of election data for voter turnout is subject to fifty different administrative and hosting standards. This set-up creates a challenge from a data science prospective as without a common API or publishing format, the data availability and formatting vary from state to state. There are some services through Congressional Quarterly which compile data related to US elections [@cq_press_about_2020]. However, those services are based on commercial subscriptions and are not readily available to individuals unless they are affiliated with a subscribed institution. However, this dynamic presents an opportunity to explore the ways in which data science techniques can efficiently gather data for analysis in ways that are both able to be replicated and that can be scaled for future use.
+
+This report focuses on gathering election related data from the state of Texas. Texas is selected because it is illustrative of the inefficient administration and accessibility of election data. As an example, the state of Texas has a robust website dedicated to providing open data for anyone to use [@state_of_texas_state_2020]. This includes data on a variety of subject areas including education, public safety, and business. Notably absent from these datasets are any reference to election data. That information is stored and provided by the Texas Secretary of State [@texas_secretary_of_state_texas_2020]. The election data is not stored in the same form as the data available through Texas's open data site and in many cases, is stored in an arcane format which makes it difficult to utilize the data.
+
+In order to focus the data collection and analysis, this report will attempt to assess the impact of the Texas voter identification law on turnout. To assess the impact of the law, data will be collected from the Texas Secretary of State's website for all general elections, ranging from 1992 to 2018. In order to ensure data are comparable between years, the turnout data will be pulled for presidential and gubernatorial elections, the latter of which occurs during midterm election years. These results would be appropriate to compare as they are votes cast at the statewide level.
+
+## Literature Review
+
+Given that the analysis will focus on assessing the impact of Texas's voter identification law, a review of the relevant research will provide some context for the analysis. This review will briefly discuss the rationale for adopting the laws along with assessing the claims made by proponents and opponents of the laws. Finally, this section will cover how this analysis fits into the ongoing research on the subject. 
+
+The policy rational for adopting voter identification laws rests on two primary assumptions about the impact of the laws: prevention of voter fraud and increasing confidence in election administration [@conover_how_2018]. Within the state of Texas, these sentiments have been echoed by officials who claim the laws prevent voter fraud through the threat of prosecution [@office_of_the_attorney_general_of_texas_ag_2018]. Both of the central claims proponents of voter identification laws have been researched and the results do not show evidence supporting either of the stated purposes. @cottrell_exploration_2018 attempted to determine how widespread voter fraud was during the 2016 election cycle and found only a few attempts of voter fraud. Further analysis suggests that initial counts of voter fraud tend to over estimate the occurrences due to errors in voter registration roles [@goel_one_2020]. Additionally, survey research has found that voter identification laws does not increase confidence in the secure administration of elections [@bowler_election_2015]. Taken as a whole, there is no compelling research that supports the assertions of proponents of voter identification laws.
+
+Opponents of voter identification laws argue that the laws place an undo burden on voters, specifically non-white voters [@henninger_who_2018]. As a procedural matter, evidence does support the assertion that non-white individuals have a more difficult time in obtaining a state issued identification which is a prerequisite to vote in states with identification laws [@barreto_disproportionate_2009]. Initial research into these laws focused on Indiana as it was the first state to adopt an identification requirement to vote. Early research found mixed evidence as to whether the law decreased non-white turnout [@ansolabehere_effects_2009; @pastor_voting_2010]. More recent research has focused on datasets which use the individual as the unit of analysis and have found that the laws decrease turnout among non-white voters [@zoltan_voter_2017]. However, these findings have been disputed: both on methodological grounds and the underlying results [@grimmer_obstacles_2018; @cantoni_strict_2019]. Examining the research on the effect of voter identification laws on turnout, the evidence is mixed and appears to be ongoing.
+
+The analysis in this report will be distinct from previous research by focusing on assessing the effect of the laws on turnout at the aggregate level. Recent research has focused on using individual level data to assess the impact of the laws, there are serious methodological concerns with such an approach [@grimmer_obstacles_2018]. The use of county data provides a chance to assess the effect of the law on turnout across all 254 Texas counties. This approach provides more units of analysis than using statewide turnout figures but is not subject to the methodological limitations of using individual level data. However, since the dependent variable in this analysis is county level turnout, questions as to whether the voter identification law in Texas places an undo burden on non-white individuals is beyond the scope of this report; such an analysis would require the use of individual data. However, this report can interrogate a broader research question: does the Texas voter identification law decrease turnout? If there is evidence that the law decreases turnout, such a result would be significant especially given that there may not be compelling evidence to support the assertions made by proponents of the law.
+
+# Data Collection
+
+For the data collection portion of this report, Python was selected as the preferred language for scraping the data from the websites. The IDE used for this analysis was Google Colab as it compiles the code using cloud computing servers which means the user's local resources are not utilized [@google_colaboratory_2020]. Usually, one might prefer to use Beautiful Soup to scrape website data [@richardson_beautiful_2020]. However, after an evaluation of alternatives, Pandas and Requests were preferred to Beautiful Soup for scraping the data for two reasons.
+
+First, the security settings for the Texas Secretary of State's websites prevent scraping using the default functions in Beautiful Soup. A basic query for one of the election results returned the following error:
+```
+import bs4 as bs
+import urllib.request
+sauce = urllib.request.urlopen('https://elections.sos.state.tx.us/elchist5_race62.htm')
+soup = bs.BeautifulSoup(sauce, 'lxml')
+#Error Returned: "urllib.error.HTTPError: HTTP Error 403: Forbidden"
+```
+To overcome this error, it was necessary to use a second library to mimic accessing the website through a proxy. For this report, the library Request was used as it provided a simple means to implement a proxy [@nate_prewitt_requests_2020]. The library can be used to bypass a security setting that blocks the native scraping with Beautiful Soup.
+
+However scraping data with Beautiful Soup and mapping out the work-flow of this process revealed the potential to remove several steps by using Pandas. While Beautiful Soup allows one to scrape all data off of a webpage, Pandas has a built-in function that allows one to pull data into Python that is formatted in a table [@team_pandas-devpandas_2020]. Whether the data was pulled into Python through Beautiful Soup or Pandas, the data would need to be cleaned and transformed. Since Panadas allows one to clean and transform the data and was able to import the data table, the use of Pandas removed the need to rely on an additional library. However, the preference of using Pandas over Beautiful Soup should be thought of as an exception rather than the rule. Pandas is efficient at pulling in data tables whereas Beautiful Soup will allow a user to capture more information. So while both Beautiful Soup and Pandas can accomplish pulling a data table from a website, Pandas is only preferred if one is interested in information from a data table. Otherwise, Beautiful Soup is a more powerful library that will allow users to capture information that is not formatted as a data table.
+
+## Scraping the Data
+
+After settling on a method for scraping the data, the next step is to examine the data and understand the best way to import the data for analysis. The example code illustrates how to import the website data into Python and analyze it.
+```
+#1992 Presidential election results
+base_site = 'https://elections.sos.state.tx.us/elchist5_race62.htm' 
+r = requests.get(base_site)
+r.status_code
+tables = pd.read_html(r.text)
+len(tables)
+```
+In this code, the base_site object is the web address where the election data is stored. The requests.get() function calls the website into Python while the status_code function checks whether the call was successful. Both of these functions are from the Requests library [@nate_prewitt_requests_2020]. The next line of code moves the data captured by Requests into Pandas. The function pd.read_html() takes the raw website data and checks for any data tables capture by the Request function; if there are multiple data tables, they are all stored in the created object [@team_pandas-devpandas_2020]. Importantly, these tables are stored as data frames and are usable with other Pandas functions immediately; this also represents another benefit of using Pandas over Beautiful Soup as it bypasses the need to create a data frame from the raw website data. The next function uses the built-in len() function to count the number of tables; in this case, it returns a value of '0' indicating that there is one data table in the object. While unnecessary in this analysis, if there are multiple tables, one can use the print(tables[]) function to view each of the tables to find the desired data. 
+
+## Data Cleaning
+
+The next step in the process is to clean the data. In order to begin, it is first necessary to get an idea of what type of data has been included in the raw data frame. 
+```
+df_1992 = tables[0]
+for col in df_1992.columns:
+  print(col)
+```
+This code sets the only data table retrieved from the web scraping as an object. Then, a simple loop is run to print the column names. The resulting print out showed fifteen columns. Unexpectedly the columns returned a hierarchical indexing which is a Panda's function for use in more complex and dimensional datasets [@team_pandas-devpandas_2020]. Below are two example columns from the raw data that contained hierarchical indexing:
+```
+('...', '...', 'County')
+('Bill Clinton/', 'Al Gore', 'DEM')
+```
+
+While not inherently problematic, this report did not need to utilize the hierarchical indexing. The analysis would only find value from the column information for the major two-party vote share along with the county name, number of votes cast, and the number of voters. Furthermore, the hierarchical indexing would make appending the subsequent data frames needlessly complex.
+```
+df_1992.columns = df_1992.columns.droplevel(0)
+cols = [3,4,5,6,7,8,9,10,11,14]
+df_1992.drop(df_1992.columns[cols],axis=1,inplace=True)
+df_1992.columns = df_1992.columns.droplevel(0)
+```
+As the code above illustrates, the first step to remove the hierarchy in the indexing is to use the df.columns.droplevel() function. This function sets the column names in the data frame to the lowest levels which are the most generalized column headings. Using an example from above, the hierarchical column ('Bill Clinton/', 'Al Gore', 'DEM') becomes ('DEM'). The next two lines of code identify the superfluous columns that will not be needed for analysis and sets them into a list. Then using the df.drop function, the columns are removed from the data frame. Finally, the level of the columns is dropped to zero to ensure that the new data frame retains the lowest level of column headings.
+
+After cleaning the columns, a few additional columns are created. First, since the end product of the data collection process should be a panel dataset, a column is created to indicate what year the general election is held. Additionally, a column is created to identify whether the data gathered are from a presidential or gubernatorial election; this column is a binary variable set to one if it is a presidential election year, and otherwise zero.
+```
+df_1992['Year'] = 1992 ##Create year column
+df_1992['Prez_Election'] = 1
+for col in df_1992.columns:
+  print(col)
+df_1992.info()
+df_1992
+```
+After adding the additional columns, it was important to check the final object to ensure everything was correct. First, the column names were check and then the data frame itself was examined. The results was a data frame with 255 rows and 7 columns; one for each county in Texas along with a total row. This process was repeated for all general election returns for presidential and gubernatorial races from 1992 to 2018.
+
+## Challenges in Cleaning
+
+One notable challenge in the cleaning is the varied nature of the data frames. As an example, the number of columns per dataframe is quite varied. In some years such as 2018, the number of columns is 7 whereas for 2016 there are 21 columns of data. Furthermore, Texas reports vote totals for each of the write-in candidates with the party identification label replaced with a 'W-I' for each write-in candidate. If this data was kept in its hierarchical index and appended, it would result in a dataset with over a hundred  unique columns and would make the use of the major-two party vote share difficult to capture as the results from each election would be stored in a separate column. Alternatively, while dropping each column index down to the lowest level and using the 'W-I' notation would have created a smaller data frame, the compiled results would not be useful since there is no inherent continuity between write-in candidates as there are for candidates from the major two parties. Therefore, the method outline above was employed as it presented the most efficient and cleanest illustration of how the data frame was built. 
+
+One other challenge to cleaning was column ordering. Column order was important as the data collected from each general election was to be appended into a single data frame. In the initial data frame from 1992, the Democratic candidate(s) were listed just after the county name. However, column ordering for the major two party candidates flipped and starting with the results from 1996 onward, the Republican candidates were listed first.
+```
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+```
+To ensure a smooth appending process, a line of code was added to all results from 1996 onward that reordered the data frame.
+
+## Appending and Merging
+
+In order to merge the collected data frames, the append command is used from the Panda's library. The append command will take two data frames and add one data frame to the end of another. Looking at the example code below, a new data frame is created named 'df_full'. This object will be the final object to export after the appending and merging process is completed.
+```
+df_full = df_1992.append(df_1994, ignore_index= True)
+...
+df_full = df_full.append(df_2018, ignore_index=True)
+```
+The first append command added the results of the 1994 general election to the end of the 1992 results and was placed into the 'df_full' object. Then, each remaining data frame from 1996 through 2018 was appended to the 'df_full' object. 
+
+After the appending process, a few additional cleaning and transformations were added.
+```
+df_full = df_full[df_full.County != 'ALL COUNTIES'] #Drop totals by year
+df_full['State'] = 'TX'
+df_full['Voter_ID'] = [1 if x > 2013 else 0 for x in df_full['Year']]
+df_full['Senate_2018'] = [1 if x == 2018 else 0 for x in df_full['Year']]
+df_full['Dem_Percent'] = df_full['DEM']/df_full['Votes']
+df_full['Rep_Percent'] = df_full['REP']/df_full['Votes']
+df_full['Rep_Lean'] = df_full['Rep_Percent']-df_full['Dem_Percent']
+```
+The first line of code in this block drops all of the rows where the county name is 'ALL COUNTIES'; this is an artifact from the original data tables which included a summary row which provided the total the votes for each candidate; after dropping these rows, there are now 254 rows per year. The subsequent code shows the creation of some new columns, some of which will be used for subsequent merging and some of which will be used in the statistical analysis.
+
+In the data visualization section, several packages will be used to create graphic and animated maps to show voter turnout patterns. In order to utilize these libraries, it is necessary to have a key on which the data can be merged. Federal Information Processing Standards (FIPS) is part of a standard coding system for federal data to make usage across agencies consistent [@levey_compliance_2018]. Accordingly, a simple scraping from the @natural_resources_conservation_service_county_2020 website was completed in order to obtain FIPS Codes for each of the counties in Texas. The scraping procedure is identical to the process outline above. 
+```
+county_codes = county_codes[:-1] #Need to drop artifact form webscraping
+county_cols = ['FIPS', 'County', 'State']
+county_codes.columns = county_cols
+county_codes['County'] = county_codes['County'].str.upper()
+```
+However, as shown above, the data frame retrieved from the @natural_resources_conservation_service_county_2020 required some additional cleaning. The first line of code  drops a row of data that caused an error during the subsequent cleaning and merging. The next three lines of code rename and format the columns to prepare the data frame to be merged with the df_full object.
+
+In order to merge the data, the pd.merge command from the Pandas library is used merging on the common columns of 'County' and 'State'. By setting the pd.merge command to how='left', a left joined merge is preformed. In this case, for each row in the df_full data frame, the corresponding FIPS code will be added from the county_codes data frame; the result is a new data frame named 'merged'.
+```
+merged = pd.merge(df_full, county_codes, on=['County', 'State'], how='left')
+merged
+null_test = pd.isnull(merged["FIPS"])
+merged[null_test]
+```
+The pd.isnull command checks whether any of the values in the FIPS column of the 'merged' data frame are 'NaN'; the command 'merged[null_test]' returned 28 rows with NaN values in the FIPS column. This means there was an error in the merging process. The error resulted from a different spelling of two county names. The Texas Secretary of State's website did not include spaces for De Witt and La Salle counties.
+```
+merged.loc[merged['County']== 'DEWITT','FIPS']= 48123
+merged.loc[merged['County']== 'LASALLE','FIPS']= 48283
+```
+Since there were only two counties with missing values, a conditional replacement for the values based on county names was preformed in order to complete the merging process. Another pd.isnull check was performed for the FIPS column in the 'merged' data frame and no NaN values were returned. 
+```
+merged.to_csv(r'C:\Users\patri\Desktop\df_full.csv', index=False, header=True)
+```
+After merging the data with the FIPS information the scraping and cleaning process in Python was complete. The result was a data frame with 3556 rows and 14 columns; this represents an observation for each of Texas's 254 counties over 14 general elections ranging from 1992 to 2018. The data are then exported to a .csv file format in order to be imported to R for statistical analysis and visualization.
+
+# Data Analysis
+
+The data analysis was completed in R as it provides a robust set of functions and libraries for statistical analysis. The IDE RStudio was used for the analysis and visualization of the data [@rstudio_team_rstudio_2020]. After the working directory is set, the csv file created in Python is imported and checked for any errors.
+```{r include =FALSE}
+# clears all objects in memory for this R session
+rm(list=ls())
+
+# sets my working directory to the specified path
+setwd("~/PhD Program/EPPS_7V81/R_WD")
+
+#Import from Python script and review data
+df_full <- read.csv("C:/Users/patri/Desktop/df_full.csv")
+
+summary(df_full)
+```
+```{r message=FALSE}
+library(plm)
+library(stargazer)
+library(haven)
+library(sf)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(leaflet)
+library(dplyr)
+library(magick)
+```
+Next, the data is set as a panel dataset for statistical analysis using the PLM library [@croissant_panel_2018]; the syntax of the library has the user set the unit of observation column first and then column with the time function.
+```{r message=FALSE}
+pdata <- pdata.frame(df_full, index=c("County","Year"))
+
+```
+```{r include=FALSE}
+pooling <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "pooling")
+summary(pooling)
+
+between <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "between")
+summary(between)
+
+firstdiff <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "fd")
+summary(firstdiff)
+
+fixed <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "within")
+summary(fixed)
+
+random <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "random")
+summary(random)
+```
+After setting-up the panel data, a regression model was created using the plm function. A useful note is that one of the arguments of the plm function is that it can preform different types of time series regression models in the analysis including pooled OLS, fixed effects, and random effects. Furthermore, the plm library also allows one to perform post regression tests such as the Hausman Test to determine the best model to use for analysis.
+```{r include = FALSE}
+#LM Test for Random effects versus OLS
+plmtest(pooling)
+  #Small p-value means we prefer Random Effects over OLS
+
+#LM Test for Fixed Effects Versus OLS
+pFtest(fixed, pooling)
+  #Small p-value and alternative hypothesis = "significant effects" means we prefer Fixed Effects to OLS
+phtest(fixed, random)
+#Hausman Test for Fixed Versus Random effects Model
+  #HO: preferred model is random effects (no correlation between the two)
+  #H1: model is fixed effects
+  #Decision Rule: if p-value < .05, reject the null hypothesis and use a fixed effects model.
+  #Resulting p-value is 1
+```
+The results of the pooled regression are displayed in the table below. The table was created using the Stargazer library [@hlavac_stargazer_2018] by formatting the results into LaTex.
+```{r message=FALSE, echo=FALSE, results='asis'}
+stargazer(pooling, type = "latex",
+          title = "Impact of Texas Voter ID Law on Voter Turnout",
+          covariate.labels = c("Presidential Election Year","Voter ID Law","2018 Senate Election","Republican Lean of the County"),
+          header = FALSE,
+          single.row = TRUE,
+          notes = "See Appendix for description of variables.",
+          notes.align = "l")
+```
+
+The table shows that there is a negative effect for the Voter Identification Law on turnout. The coefficient of -.056 indicates that the law decreased turnout at the county level by 5.6 percent. This finding is statistically significant at the less than .01 level which is lower than the conventionally accepted level of .05. Related to the central research question, this finding provides some evidence that voter identification laws decrease turnout at the county level in Texas.  
+
+The other control variables perform as expected. Both the Presidential Election Year and 2018 Senate Election variables are binary variables; the coefficients are positive and statistically significant at the less than .01 level of significance. This is to be expected as Presidential election years have higher levels of turnout and the 2018 Senate election in Texas produced an abnormally high level of participation. The Republican Lean of the County variable return a positive and statistically significant coefficient. This suggests that as a county becomes more Republican, turnout in the county increases. 
+
+# Data Visualization
+
+The data visualization section focuses on the use of dynamic visualization options for graphing spatial data. The idea of this analysis is to create graphical representations of voter turnout overlaid onto county maps of Texas. In order to create these maps, it is necessary to import and merge spatial data into the main data frame. The spatial data was obtained from @texas_department_of_transportation_texas_2020. The specific file type to be merged is a .shp file which requires the Haven library to import [@wickham_haven_2020].
+```{r include=FALSE}
+options(scipen = 999)
+```
+```{r message=FALSE, results='hide'}
+mymap <- st_read("C:/Users/patri/Desktop/TX_County/County.shp", stringsAsFactors = FALSE)
+str(mymap)
+#Can use FIPS_ST_CN to match against df-full
+colnames(mymap)[colnames(mymap)=="FIPS_ST_CN"] <- "FIPS"
+mymap$FIPS <- as.numeric(mymap$FIPS)
+mymap$FIPS
+map_and_data <- inner_join(mymap, df_full)
+```
+There was some minor editing needed for column names and data types in order to get the data frames prepared for merging. After the cleaning was complete, the data were merged into a new data frame using the inner_join function which matched on the FIPS column. The important data from the .shp file is the geometry data which will allow maps to be drawn in plots.
+
+A useful starting point for mapping data is the ggplot library in combination with the sf library [@wickham_ggplot2_2016; @pebesma_simple_2018].
+```{r}
+ggplot(map_and_data) +
+  ggtitle("Voter Turnout in Texas by County") +
+geom_sf(aes(fill = Turnout)) +
+  scale_fill_viridis_c(option = "plasma", trans = "sqrt")
+```
+The above plot is sufficient with each of the counties filled is a color on a gradient to represent the varying levels of turnout across the state. While the ggplot and sf libraries have some useful functions, ultimately, this report utilized the library tmap as it provides much of the same functionality offered by ggplot and sf but is specifically designed to work with maps as both static visuals and dynamic images [@tennekes_tmap_2018]. The library is built using elements from the ggplot library which makes the syntax familiar if the user has experience with gpplot. The tmap library has a number of supporting libraries users should install prior to use including tmaptools, leaflet, and dplyr [@tennekes_tmaptools_2020; @cheng_leaflet_2019; @wickham_dplyr_2020]. 
+
+One of the useful features of tmap library is the ability to switch between plotting mode and view mode [@tennekes_tmap_2018]. In plotting mode, maps are generated as static objects; these plots are similar to the results of using the ggplot function. Below is a map of voter turnout in Texas for the 2014 election which was the first general election after the voter identification law went into effect. This map was created by sub-setting based on year into a new dataset.
+```{r message=FALSE, fig.align='center'}
+map_and_data_2014 <- map_and_data %>%
+  filter(Year == "2014")
+tm_shape(map_and_data_2014) +
+  tm_polygons("Turnout", palette = "plasma") +
+  tm_layout(legend.outside = TRUE, 
+            main.title = "Texas Voter Turnout by County: 2014",
+            panel.labels = "Turnout as a percent of registered voters") +
+  tmap_mode("plot")
+```
+After sub-setting the data, the tm_shape function accepts an object and will automatically detect the geometric data in order to create the map. The tm_polygons function accepts a few arguments in this example, the first of which is the column that will be filled into the county lines. In this case, voter turnout as a percentile is filled. The next argument, palette = sets the color scale for measuring turnout; in this case darker colors means higher turnout. The tm_layout function provides a number of arguments that enhance the description of the graphic. Finally, the tmap_mode function sets the graphic as static when "plot" is entered as an argument. 
+
+However, by switching the argument in the tmap_mode function from "plot" to "view", the map becomes an interactive map which can be saved and viewed using any browser in the .html format. 
+```{r message=FALSE, results='hide'}
+tm_shape(map_and_data_2014) +
+  tm_polygons("Turnout", id="County", palette = "plasma", popup.vars=TRUE) +
+  tm_layout(legend.outside = TRUE, 
+            main.title = "Texas Voter Turnout by County: 2014",
+            panel.labels = "Turnout as a percent of registered voters") +
+  tmap_mode("view")
+tmap_last()
+tx_turnout_2014 <- tmap_last()
+tmap_save(tx_turnout_2014, "tx_turnout_map_2014.html")
+```
+[**A copy of the map can be downloaded and viewed using any browser. Note - this file exceeds the GitHub file size limit for compiling a .html preview and will need to be downloaded in order to be viewed.**](https://github.com/pmuenks/pmuenks.github.io/blob/master/_data/tx_turnout_map_2014.html) A minor change is made in the tm_polygons function with the inclusion of the id="County" argument. This sets the name of each spatial object to the name of the county. It also means that when a user hovers over the county, the name and turnout rate appear. The popup.vars function will allow users to view all of the underlying variables for each county. Using the base map visualization from Leaflet, users can zoom in and out on the map as well as change the map types to include street or topographical displays [@cheng_leaflet_2019]. The tmap_last function calls the last tmap visual created and allows it to be saved using the tmap_save function. 
+
+Another useful visualization tool from the tmap library is the ability to create animated gif files. This type of visualization is useful if one has time series data and would like to show changes over time. [**The .gif file generated by the code below can be downloaded here.**](https://github.com/pmuenks/pmuenks.github.io/blob/master/_data/Texas_Turnout.gif)
+```{r message=FALSE, results='hide'}
+m1 <- tm_shape(map_and_data) +
+        tm_polygons("Turnout", id = "County", palette = "plasma", n = 7) +
+        tm_facets(along = "Year") +
+        tm_layout(legend.outside = TRUE)
+
+tmap_animation(m1, filename = "Texas_Turnout.gif", width = 1000, height = 1000, delay = 120)
+
+#Show animated map
+magick::image_read("Texas_Turnout.gif")
+```
+The code above is similar to the static and dynamic plots  with a few notable changes. First, rather than using a subsetted data frame, the full data is used in the tm_shape function. Next, the tm_polygons function includes a new argument, n = 7. This function sets the scale showing turnout across all of the animations at 7 groups or bins and ensures the number of gradients is consistent across years. The tm_facets function is what sets the iterations for the animation; in this instance, since there are 14 general elections between 1992 and 2018, there will be 14 iterations in the the final gif. The tmap_animation function takes an tmap object and allows you to set the file output. An important function to note is the delay = which sets the time between each animation in milliseconds. Finally, the magick::image_read function accepts a .gif file as an argument and allows the image to be displayed in RStudio [@ooms_magick_2020]. As a precaution,  one will need to install Magick Image as an application on their device in addition to installing and loading the library: otherwise this function will return an error when compiling.
+
+# Conclusion
+
+The information and skills gained in completing this report will be used to support the author's efforts in completing a dissertation. The web scraping skill set will be useful both as a means to collect data for analysis but also in order to ensure the work is capable of being replicated. Additionally, the statistical analysis through R will be useful as nearly all of the analysis in the dissertation will require time series analysis. Finally, the visualization skills will ensure that any analysis or findings can be displayed in ways that will engage readers. While it does not fall within one of the aforementioned categories, this report was created using R Markdown which is an effective tool for formalizing code and written analysis. One of the primary benefits of R Markdown is it allows both the document and code to be replicated by the reader [@jj_allaire_dynamic_nodate]. This makes it an effective tool for creating academic reports as it both ensures formatting requirements are met but also fulfills the academic norm of ensuring work can be replicated.
+
+Based on the work in this report, there are a few areas through which one could continue this analysis. One area of data science that this report did not cover was data storage and management. While the replication material for this report can be found on github, a more robust and ambitious project would be to create a database to store the collected data and allow others to access it. Alternatively, this project could be used as a starting point to create an API to query state government sites that house election data. Neither of these endeavors would be mutually exclusive and present opportunities to expand this work by making it accessible to a audience for future use.
+
+This report demonstrated three distinct areas of data science while in support of research in political science. First, in the area of data collection, this report demonstrated how to scrape data from a website using Python. Next, in the area of data analysis, this report provided a brief introduction to basic time-series analysis through the use of R and RStudio. Finally, in the area of data visualization, this report merged rectangular data with spatial data in order to map data in both static and dynamic images. Together, this report presents a template for collecting, analyzing, and visualizing data related to US elections. 
+
+\newpage
+# Appendix
+
+## Github Links
+
+[EPPS 7v81 Final Project Replication Material](https://github.com/pmuenks/pmuenks.github.io/tree/master/_data)
+
+## Regression Table: Description of Variables
+The dependent variable is the turnout rate by county. Presidential Election Year is a binary variable coded 1 if it is presidential election year, 0 otherwise. Voter ID Law is binary variable coded 1 if the law was in effect for the election, 0 otherwise. 2018 Senate Election is a binary variable coded 1 for the 2018 election cycle, 0 otherwise. The Republican Lean of the County variable was created by taking the percent of the Republican vote and subtracting the percent of the Democratic vote. If the resulting value is positive, that is the degree to which the county leans Republican; negative is the degree which the county is Democratic.
+
+## Python Code
+```
+# -*- coding: utf-8 -*-
+"""EPPS 7V81 - Final Project.ipynb
+
+Automatically generated by Colaboratory.
+
+Original file is located at
+    https://colab.research.google.com/drive/1Nq1eS2JvXfY5qR1RQllFvxk-boHGvzEs
+
+Need to import pandas and requests to get the table.
+"""
+
+import pandas as pd
+import requests
+
+"""Usually, one might prefer to use Beautiful Soup to scrape website data. However, there are two reasons for using Request and Pandas rather than Beautiful Soup. First, the settings for the Texas SOS websites have security settings that prevent scraping using the default functions in Beautiful Soup. Accordingly, to access the data, onewould need to use an additional library to mimic accessing the website through a proxy, in this case, . By contrast, the request library allows one to access the site using a proxy request by the default library. Second, while Beautiful Soup allows one to scrape all data off of a webpage, Pandas has a built-in function that allows one to pull data into Python that is formatted in a table. Additionally, Panadas allows one to clean and trasnform the data while Beautiful Soup does not offer the same functionality for data cleaning. So while both Beautiful Soup and Pandas can accomplish pulling a datatable from a website, Pandas is preferred if one is only interested in the information from the data table. Therefore, as a general rule, an effective combination for scraping data would be to use a proxy site from Requests and Beautiful Soup to scrape the data. However, because this project is pulling data from a website table, using only Pandas to scrape the data is sufficient."""
+
+base_site = 'https://elections.sos.state.tx.us/elchist5_race62.htm' #1992 Presidential election results
+
+r = requests.get(base_site)
+r.status_code
+
+"""Here, the len(tables) command will return the number of tables found by the pd.read_html command. In this case, because there is only one table, the cleaning process is simple. However, if scraping a site that has multiple data tables, this function is useful for identifying multiple tables."""
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_1992 = tables[0]
+for col in df_1992.columns:
+  print(col)
+df_1992.columns = df_1992.columns.droplevel(0)
+cols = [3,4,5,6,7,8,9,10,11,14]
+df_1992.drop(df_1992.columns[cols],axis=1,inplace=True)
+#df.drop(columns='W-I', axis=1)
+df_1992.columns = df_1992.columns.droplevel(0)
+df_1992['Year'] = 1992 ##Create year column
+df_1992['Prez_Election'] = 1
+for col in df_1992.columns:
+  print(col)
+df_1992.info()
+df_1992
+
+"""Repeat this process for 1994 general election using data from the Governor's race as it had the most votes."""
+
+base_site = 'https://elections.sos.state.tx.us/elchist11_race833.htm' #1994 Governor's election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_1994 = tables[0]
+for col in df_1994.columns:
+  print(col)
+df_1994.columns = df_1994.columns.droplevel(0)
+cols = [3,6]
+df_1994.drop(df_1994.columns[cols],axis=1,inplace=True)
+df_1994.columns = df_1994.columns.droplevel(0)
+df_1994['Year'] = 1994
+df_1994['Prez_Election'] = 0
+for col in df_1994.columns:
+  print(col)
+df_1994.info()
+df_1994
+
+"""Repeat this process for the 1996 general election using data from the Presidential race as it had the most votes cast."""
+
+base_site = 'https://elections.sos.state.tx.us/elchist56_race62.htm' #1996 Presidential election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+"""For the 1996 data, it appears the columns no longer appear in the same order as the previous two elections. Specifically, the vote totals for the democratic candidates in the presidential election are no longer listed first. To fix this, a simple column rearrangement is completed by creating a list with the column names in the desired order and then creating a new dataframe which refernces the old dataframe using the list of column names. The resulting dataframe presents the columns in the correct order of: County, DEM, REP, Votes, Voters, Year."""
+
+df_1996 = tables[0]
+for col in df_1996.columns:
+  print(col)
+df_1996.columns = df_1996.columns.droplevel(0)
+cols = [3,4,5,6,7,8,11]
+df_1996.drop(df_1996.columns[cols],axis=1,inplace=True)
+df_1996.columns = df_1996.columns.droplevel(0)
+df_1996['Year'] = 1996
+df_1996['Prez_Election'] = 1
+for col in df_1996.columns:
+  print(col)
+df_1996.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_1996 = df_1996[new_columns]
+df_1996
+
+base_site = 'https://elections.sos.state.tx.us/elchist72_race833.htm' #1998 Governor's election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_1998 = tables[0]
+for col in df_1998.columns:
+  print(col)
+df_1998.columns = df_1998.columns.droplevel(0)
+cols = [3,4,7]
+df_1998.drop(df_1998.columns[cols],axis=1,inplace=True)
+df_1998.columns = df_1998.columns.droplevel(0)
+df_1998['Year'] = 1998
+df_1998['Prez_Election'] = 0
+for col in df_1998.columns:
+  print(col)
+df_1998.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_1998 = df_1998[new_columns]
+df_1998
+
+base_site = 'https://elections.sos.state.tx.us/elchist82_race62.htm' #2000 Presidential election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2000 = tables[0]
+for col in df_2000.columns:
+  print(col)
+df_2000.columns = df_2000.columns.droplevel(0)
+cols = [3,4,5,6,7,8,11]
+df_2000.drop(df_2000.columns[cols],axis=1,inplace=True)
+df_2000.columns = df_2000.columns.droplevel(0)
+df_2000['Year'] = 2000
+df_2000['Prez_Election'] = 1
+for col in df_2000.columns:
+  print(col)
+df_2000.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2000 = df_2000[new_columns]
+df_2000
+
+base_site = 'https://elections.sos.state.tx.us/elchist95_race833.htm' #2002 Governor's election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2002 = tables[0]
+for col in df_2002.columns:
+  print(col)
+df_2002.columns = df_2002.columns.droplevel(0)
+cols = [3,4,5,6,9]
+df_2002.drop(df_2002.columns[cols],axis=1,inplace=True)
+df_2002.columns = df_2002.columns.droplevel(0)
+df_2002['Year'] = 2002
+df_2002['Prez_Election'] = 0
+for col in df_2002.columns:
+  print(col)
+df_2002.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2002 = df_2002[new_columns]
+df_2002
+
+base_site = 'https://elections.sos.state.tx.us/elchist114_race62.htm' #2004 Presidential election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2004 = tables[0]
+for col in df_2004.columns:
+  print(col)
+df_2004.columns = df_2004.columns.droplevel(0)
+cols = [3,4,5,6,7,8,9,10,13]
+df_2004.drop(df_2004.columns[cols],axis=1,inplace=True)
+df_2004.columns = df_2004.columns.droplevel(0)
+df_2004['Year'] = 2004
+df_2004['Prez_Election'] = 1
+for col in df_2004.columns:
+  print(col)
+df_2004.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2004 = df_2004[new_columns]
+df_2004
+
+base_site = 'https://elections.sos.state.tx.us/elchist127_race833.htm' #2006 Governor's election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2006 = tables[0]
+for col in df_2006.columns:
+  print(col)
+df_2006.columns = df_2006.columns.droplevel(0)
+cols = [3,4,5,6,9]
+df_2006.drop(df_2006.columns[cols],axis=1,inplace=True)
+df_2006.columns = df_2006.columns.droplevel(0)
+df_2006['Year'] = 2006
+df_2006['Prez_Election'] = 0
+for col in df_2006.columns:
+  print(col)
+df_2006.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2006 = df_2006[new_columns]
+df_2006
+
+base_site = 'https://elections.sos.state.tx.us/elchist141_race62.htm' #2008 Presidential election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2008 = tables[0]
+for col in df_2008.columns:
+  print(col)
+df_2008.columns = df_2008.columns.droplevel(0)
+cols = [3,4,5,6,7,8,9,10,13]
+df_2008.drop(df_2008.columns[cols],axis=1,inplace=True)
+df_2008.columns = df_2008.columns.droplevel(0)
+df_2008['Year'] = 2008
+df_2008['Prez_Election'] = 1
+for col in df_2008.columns:
+  print(col)
+df_2008.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2008 = df_2008[new_columns]
+df_2008
+
+base_site = 'https://elections.sos.state.tx.us/elchist154_race833.htm' #2010 Governor's election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2010 = tables[0]
+for col in df_2010.columns:
+  print(col)
+df_2010.columns = df_2010.columns.droplevel(0)
+cols = [3,4,5,8]
+df_2010.drop(df_2010.columns[cols],axis=1,inplace=True)
+df_2010.columns = df_2010.columns.droplevel(0)
+df_2010['Year'] = 2010
+df_2010['Prez_Election'] = 0
+for col in df_2010.columns:
+  print(col)
+df_2010.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2010 = df_2010[new_columns]
+df_2010
+
+base_site = 'https://elections.sos.state.tx.us/elchist164_race62.htm' #2012 Presidential election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2012 = tables[0]
+for col in df_2012.columns:
+  print(col)
+df_2012.columns = df_2012.columns.droplevel(0)
+cols = [3,4,5,6,7,8,9,10,11,14]
+df_2012.drop(df_2012.columns[cols],axis=1,inplace=True)
+df_2012.columns = df_2012.columns.droplevel(0)
+df_2012['Year'] = 2012
+df_2012['Prez_Election'] = 1
+for col in df_2012.columns:
+  print(col)
+df_2012.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2012 = df_2012[new_columns]
+df_2012
+
+base_site = 'https://elections.sos.state.tx.us/elchist175_race833.htm' #2014 Governor's election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2014 = tables[0]
+for col in df_2014.columns:
+  print(col)
+df_2014.columns = df_2014.columns.droplevel(0)
+cols = [3,4,5,8]
+df_2014.drop(df_2014.columns[cols],axis=1,inplace=True)
+df_2014.columns = df_2014.columns.droplevel(0)
+df_2014['Year'] = 2014
+df_2014['Prez_Election'] = 0
+for col in df_2014.columns:
+  print(col)
+df_2014.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2014 = df_2014[new_columns]
+df_2014
+
+base_site = 'https://elections.sos.state.tx.us/elchist319_race62.htm' #2016 Presidential election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2016 = tables[0]
+for col in df_2016.columns:
+  print(col)
+df_2016.columns = df_2016.columns.droplevel(0)
+cols = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,20]
+df_2016.drop(df_2016.columns[cols],axis=1,inplace=True)
+df_2016.columns = df_2016.columns.droplevel(0)
+df_2016['Year'] = 2016
+df_2016['Prez_Election'] = 1
+for col in df_2016.columns:
+  print(col)
+df_2016.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2016 = df_2016[new_columns]
+df_2016
+
+base_site = 'https://elections.sos.state.tx.us/elchist331_race833.htm' #2018 Governor's election results
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+df_2018 = tables[0]
+for col in df_2018.columns:
+  print(col)
+df_2018.columns = df_2018.columns.droplevel(0)
+cols = [3,6]
+df_2018.drop(df_2018.columns[cols],axis=1,inplace=True)
+df_2018.columns = df_2018.columns.droplevel(0)
+df_2018['Year'] = 2018
+df_2018['Prez_Election'] = 0
+for col in df_2018.columns:
+  print(col)
+df_2018.info()
+new_columns = ['County', 'DEM', 'REP', 'Votes', 'Voters', 'Year', 'Prez_Election']
+df_2018 = df_2018[new_columns]
+df_2018
+
+df_full = df_1992.append(df_1994, ignore_index= True)
+df_full = df_full.append(df_1996, ignore_index=True)
+df_full = df_full.append(df_1998, ignore_index=True)
+df_full = df_full.append(df_2000, ignore_index=True)
+df_full = df_full.append(df_2002, ignore_index=True)
+df_full = df_full.append(df_2004, ignore_index=True)
+df_full = df_full.append(df_2006, ignore_index=True)
+df_full = df_full.append(df_2008, ignore_index=True)
+df_full = df_full.append(df_2010, ignore_index=True)
+df_full = df_full.append(df_2012, ignore_index=True)
+df_full = df_full.append(df_2014, ignore_index=True)
+df_full = df_full.append(df_2016, ignore_index=True)
+df_full = df_full.append(df_2018, ignore_index=True)
+
+df_full = df_full[df_full.County != 'ALL COUNTIES'] #Drop totals by year
+df_full['State'] = 'TX'
+df_full['Voter_ID'] = [1 if x > 2013 else 0 for x in df_full['Year']]
+df_full['Senate_2018'] = [1 if x == 2018 else 0 for x in df_full['Year']]
+df_full['Dem_Percent'] = df_full['DEM']/df_full['Votes']
+df_full['Rep_Percent'] = df_full['REP']/df_full['Votes']
+df_full['Rep_Lean'] = df_full['Rep_Percent']-df_full['Dem_Percent']
+df_full['Turnout'] = df_full['Votes']/df_full['Voters']
+
+df_full
+
+base_site = 'https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/home/?cid=nrcs143_013697'
+
+r = requests.get(base_site)
+r.status_code
+
+tables = pd.read_html(r.text)
+
+len(tables)
+
+county_codes = tables[0]
+
+for col in county_codes.columns:
+  print(col)
+print(county_codes)
+
+county_codes = county_codes[:-1] #Need to drop artifact form webscraping
+county_cols = ['FIPS', 'County', 'State']
+county_codes.columns = county_cols
+county_codes['County'] = county_codes['County'].str.upper()
+
+county_codes
+
+merged = pd.merge(df_full, county_codes, on=['County', 'State'], how='left')
+
+null_test = pd.isnull(merged["FIPS"])
+merged[null_test]
+
+merged.loc[merged['County']== 'DEWITT', 'FIPS']= 48123
+merged.loc[merged['County']== 'LASALLE', 'FIPS']= 48283
+
+print(merged)
+
+merged.to_csv(r'C:\Users\patri\Desktop\df_full.csv', index=False, header=True)
+```
+
+## R Code
+```
+# clears all objects in memory for this R session
+rm(list=ls())
+
+# sets my working directory to the specified path
+setwd("~/PhD Program/EPPS_7V81/R_WD")
+
+#Import from Python script and review data
+df_full <- read.csv("C:/Users/patri/Desktop/df_full.csv")
+
+summary(df_full)
+
+#Load needed libraries
+
+library(plm)
+library(stargazer)
+library(haven)
+library(sf)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(leaflet)
+library(magick)
+
+
+
+
+#Set data as panel data by county and year
+pdata <- pdata.frame(df_full, index=c("County","Year"))
+
+
+#Regression Analysis
+pooling <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "pooling")
+summary(pooling)
+
+between <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "between")
+summary(between)
+
+firstdiff <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "fd")
+summary(firstdiff)
+
+fixed <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "within")
+summary(fixed)
+
+random <- plm(Turnout ~ Prez_Election + Voter_ID + Senate_2018 + Rep_Lean, data = pdata, model = "random")
+summary(random)
+
+  #Note the high Theta value which suggests that the variation is coming from the county(Individual) level. Good outcome.
+
+
+#LM Test for Random effects versus OLS
+plmtest(pooling)
+  #Small p-value means we prefer Random Effects over OLS
+
+#LM Test for Fixed Effects Versus OLS
+pFtest(fixed, pooling)
+  #Small p-value and alternative hypothesis = "significant effects" means we prefer Fixed Effects to OLS
+
+#Hausman Test for Fixed Versus Random effects Model
+phtest(fixed, random)
+  #HO: preferred model is random effects (no correlation between the two)
+  #H1: model is fixed effects
+  #Decision Rule: if p-value < .05, reject the null hypothesis and use a fixed effects model.
+  #Resulting p-value is 1
+
+options(scipen = 999)
+
+mymap <- st_read("C:/Users/patri/Desktop/TX_County/County.shp", stringsAsFactors = FALSE)
+str(mymap)
+#Can use FIPS_ST_CN to match against pdata - need to rename
+
+colnames(mymap)[colnames(mymap)=="FIPS_ST_CN"] <- "FIPS"
+mymap$FIPS <- as.numeric(mymap$FIPS)
+mymap$FIPS
+
+map_and_data <- inner_join(mymap, df_full)
+
+#merge the data using a left join
+
+#Basic graph with county lines.
+ggplot(map_and_data) +
+geom_sf(aes(fill = Turnout)) +
+  scale_fill_viridis_c(option = "plasma", trans = "sqrt")
+
+#Basic tmap plot
+map_and_data_2014 <- map_and_data %>%
+  filter(Year == "2014")
+tm_shape(map_and_data_2014) +
+  tm_polygons("Turnout", palette = "plasma") +
+  tm_layout(legend.outside = TRUE, 
+            main.title = "Texas Voter Turnout by County: 2014",
+            panel.labels = "Turnout as a percent of registered voters") +
+  tmap_mode("plot")
+
+#Interactive tmap for html viewing
+map_and_data_2014 <- map_and_data %>%
+  filter(Year == "2014")
+
+tm_shape(map_and_data_2014) +
+  tm_polygons("Turnout", id="County", palette = "plasma", popup.vars=TRUE) +
+  tm_layout(legend.outside = TRUE, 
+            main.title = "Texas Voter Turnout by County: 2014",
+            panel.labels = "Turnout as a percent of registered voters") +
+  tmap_mode("view")
+tx_turnout_2014 <- tmap_last()
+tmap_save(tx_turnout_2014, "tx_turnout_map_2014.html")
+
+test_map <- tmap_last()
+tmap_save(test_map, "test_map.html")
+
+#Animated turnout map: 1992 - 2018
+m1 <- tm_shape(map_and_data) +
+        tm_polygons("Turnout", id = "County", palette = "plasma", n = 7) +
+        tm_facets(along = "Year") +
+        tm_layout(legend.outside = TRUE)
+
+tmap_animation(m1, filename = "Texas_Turnout.gif", width = 1000, height = 1000, delay = 120)
+
+#Show animated map
+magick::image_read("Texas_Turnout.gif")
+```
+
+\newpage
+# References
